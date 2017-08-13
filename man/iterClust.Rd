@@ -43,6 +43,12 @@ A framework for performing clustering analysis iteratively
 }
 \details{
 ####################
+General Idea
+####################
+
+In a scenario where populations A, B1, B2 exist, pronounce differences between A and B may mask subtle differences between B1 and B2. To solve this problem, so that heterogeneity can be better detected, clustering analysis needs to be performed iteratively, so that, for example, in iteration 1, A and B are seperated and in iteration 2, B1 and B2 are seperated.
+
+####################
 General Work Flow
 ####################
 

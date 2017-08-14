@@ -12,7 +12,7 @@
 #' General Work Flow
 #' ####################
 #' 
-#' Iteration Start ==>>
+#' ith Iteration Start ==>>
 #' 
 #' featureSelectfun (feature selection) ==>>
 #' 
@@ -26,11 +26,11 @@
 #' 
 #' minClustSize (remove clusters with few observations) ==>>
 #' 
-#' obsEvalfun (evaluate how each bservations are clustered) ==>>
+#' obsEvalfun (evaluate how each observations are clustered) ==>>
 #' 
 #' obsOutlierfun (remove poorly clustered observations) ==>>
 #' 
-#' results in Internal Variables ==>>
+#' results in Internal Variables (IV) ==>>
 #' 
 #' ith Iteration End
 #' 
@@ -38,7 +38,7 @@
 #' Internal Variables (IV)
 #' ####################
 #' 
-#' iterClust has the following internal variables (IV) which can be used in externally defined functions:
+#' iterClust has the following internal variables (IV) which can be used in user-defined functions:
 #' 
 #' cluster: (list) the return value, described in "Value" section
 #' 

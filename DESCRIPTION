@@ -9,5 +9,5 @@ Description: A framework for performing clustering analysis iteratively.
 License: file LICENSE
 LazyData: TRUE
 Suggests: tsne, cluster, ConsensusClusterPlus, bcellViper
-BiocViews: Clustering
+BiocViews:  StatisticalMethod, Clustering
 RoxygenNote: 6.0.1

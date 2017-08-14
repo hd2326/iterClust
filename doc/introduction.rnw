@@ -1,0 +1,321 @@
+%\VignetteIndexEntry{iterClust}
+%\VignetteKeywords{Iterative Clustering}
+%\VignettePackage{iterClust}
+
+\documentclass[12pt]{article}
+
+\usepackage{amsmath}
+\usepackage{times}
+\usepackage{hyperref}
+\usepackage[numbers]{natbib}
+
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\textfraction}{0.1}
+
+\textwidth=6.2in
+\textheight=8.5in
+\oddsidemargin=.1in
+\evensidemargin=.1in
+\headheight=-.3in
+
+\newcommand{\scscst}{\scriptscriptstyle}
+\newcommand{\scst}{\scriptstyle}
+\newcommand{\Robject}[1]{{\texttt{#1}}}
+\newcommand{\Rfunction}[1]{{\texttt{#1}}}
+\newcommand{\Rclass}[1]{\textit{#1}}
+\newcommand{\Rpackage}[1]{\textit{#1}}
+\newcommand{\Rexpression}[1]{\texttt{#1}}
+\newcommand{\Rmethod}[1]{{\texttt{#1}}}
+\newcommand{\Rfunarg}[1]{{\texttt{#1}}}
+
+
+
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+%------------------------------------------------------------
+\title{Introduction to Iterative CLustering Analysis Using iterClust}
+%------------------------------------------------------------
+\author{Hongxu Ding , Wanxin Wang and Andrea Califano}
+\maketitle
+\tableofcontents
+
+%------------------------------------------------------------
+\section{Introduction}
+%------------------------------------------------------------ 
+
+In a scenario where populations A, B1, B2 exist, pronounce differences between A and B may mask subtle differences between B1 and B2. To solve this problem, so that heterogeneity can be better detected, clustering analysis needs to be performed iteratively, so that, for example, in iteration 1, A and B are seperated and in iteration 2, B1 and B2 are seperated. The \Rfunction{iterClust()} function in \Rpackage{iterClust} package provides an statistical framework for performing such iterative clustering analysis, which can be used to, for instance discover cell populations using single cells RNA-Seq profiles, clustering clinically-related patient gene expression profiles and solve general clustering problems.
+
+%------------------------------------------------------------
+\subsection{General Work Flow}
+%------------------------------------------------------------ 
+
+\Rfunction{iterClust()} organizes user-defined functions and parameters as follows:
+
+
+ith Iteration Start =>
+
+\Rfunction{featureSelectfun} (feature selection) =>
+
+\Rexpression{minFeatureSize} (confirm enough features are selected) =>
+
+\Rfunction{clustHeterofun} (confirm heterogeneity) =>
+
+\Rfunction{clustfun} (generate several clustering schemes, only for heterogenous clusters) =>
+
+\Rfunction{clustEvalfun} (pick the optimal clustering scheme) =>
+
+\Rexpression{minClustSize} (remove clusters with few observations) =>
+
+\Rfunction{obsEvalfun} (evaluate how each observations are clustered) =>
+
+\Rfunction{obsOutlierfun} (remove poorly clustered observations) =>
+
+results in Internal Variables (IV) =>
+
+ith Iteration End
+
+%------------------------------------------------------------
+\subsection{Internal Variables (IV)}
+%------------------------------------------------------------ 
+
+\Rfunction{iterClust()} has the following IVs which can be used in user-defined functions:
+
+\Rexpression{cluster}, a list with two elements, named cluster and feature, which are also list object, organized by round of iterations, containing names of observations for each clusters in this specific iteration, and features used to split clusters in previous iterations thereby produce the current clusters organized as lists, respectively.
+
+\Rexpression{depth}, an integer specifying current round of iteration.
+
+%------------------------------------------------------------
+\subsection{Installation}
+%------------------------------------------------------------ 
+
+Running examples in \Rpackage{iterClust} requires pre-installed \Rpackage{tsne}, \Rpackage{cluster}, \Rpackage{ConsensusClusterPlus} and \Rpackage{bcellViper}. To install \Rpackage{iterClust}, source biocLite from bioconductor
+
+\begin{verbatim}
+source("http://www.bioconductor.org/biocLite.R")
+biocLite("iterClust")
+\end{verbatim}
+
+%------------------------------------------------------------
+\subsection{Citing}
+%------------------------------------------------------------ 
+
+% Culhane AC, Thioulouse J, Perriere G, Higgins DG.(2005) MADE4: an R package for multivariate analysis of gene expression data. \textit{Bioinformatics} \textbf{21(11):}2789-90. 
+
+
+%------------------------------------------------------------
+\section{Data Preparation}
+%------------------------------------------------------------ 
+
+We applied \Rfunction{iterClust()} to a B-cell expression dataset included in \Rpackage{bcellViper}. We load the two librarues first, followed by load and filter expression matrix and phenotype annotation.
+
+<<dataprep>>=
+library(iterClust)
+library(bcellViper)
+data(bcellViper)
+exp <- exprs(dset)
+pheno <- as.character(dset@phenoData@data$description)
+exp <- exp[, pheno %in% names(table(pheno))[table(pheno) > 5]]
+pheno <- pheno[pheno %in% names(table(pheno))[table(pheno) > 5]]
+
+dim(exp)
+
+table(pheno)
+@
+
+%------------------------------------------------------------
+\section{Define functions}
+%------------------------------------------------------------ 
+
+We define functions needed for \Rfunction{iterClust()}, as well as load package \Rpackage{cluster} that these functions needed.
+
+<<cluster, results=hide>>=
+library(cluster)
+@
+
+In every iterations, all genes in the dataset were used for clustering analysis.
+
+<<featureSelectfun, results=hide>>=
+featureSelectfun <- function(dset, iteration, feature) return(rownames(dset))
+@
+
+In every iterations, the core function for clustering is \Rfunction{pam()} in package cluster. We searched through 2 to 5 clusters to find the optimal result.
+
+<<clustfun, results=hide>>=
+clustfun <- function(dset, iteration){
+  dist <- as.dist(1 - cor(dset))
+  range=seq(2, (ncol(dset)-1), by = 1)
+  clust <- vector("list", length(range))
+  for (i in 1:length(range)) clust[[i]] <- pam(dist, range[i])$clustering
+  return(clust)}
+@
+
+In every iterations, the core function for evaluating different clustering schemes is \Rfunction{silhouette()} in package \Rpackage{cluster}. We considered clustering schemes with the highest average silhouette score as the optimal scheme. clust is the output for function \Rfunction{clustfun()}.
+
+<<clustEvalfun, results=hide>>=
+clustEvalfun <- function(dset, iteration, clust){
+  dist <- as.dist(1 - cor(dset))
+  clustEval <- vector("numeric", length(clust))
+  for (i in 1:length(clust)){
+      clustEval[i] <- mean(silhouette(clust[[i]], dist)[, "sil_width"])}
+  return(clustEval)}
+@
+
+In every iterations, clusters with average silhouette score greater than 0.15 were considered as heterogenous and further splitted.
+
+<<clustHeterofun, results=hide>>=
+clustHeterofun <- function(clustEval, iteration){
+    return(clustEval > 0*iteration+0.15)}
+@
+
+In every iterations, the core function for evaluating each observation is \Rfunction{silhouette()} in package cluster. clust is the output for function \Rfunction{clustfun()}.
+
+<<obsEvalfun, results=hide>>=
+obsEvalfun <- function(dset, clust, iteration){
+  dist <- as.dist(1 - cor(dset))
+  obsEval <- vector("numeric", length(clust))
+  return(silhouette(clust, dist)[, "sil_width"])}
+@
+
+In every iterations, observations with silhouette score smaller than -1 were considered as outlier observations.
+
+<<obsOutlierfun, results=hide>>=
+obsOutlierfun <- function(obsEval, iteration) return(obsEval < 0*iteration-1)
+@
+
+%------------------------------------------------------------
+\section{Run iterClust}
+%------------------------------------------------------------ 
+
+\Rfunction{iterClust()} was run with the above defined functions. Then we showed how the results of \Rfunction{iterClust()} are organized.
+
+<<iterclust>>=
+c <- iterClust(exp, maxIter=3,
+               minFeatureSize=100, featureSelectfun=featureSelectfun,
+               minClustSize=5, clustfun=clustfun,
+               clustEvalfun=clustEvalfun, clustHeterofun=clustHeterofun,
+               obsEvalfun=obsEvalfun, obsOutlierfun=obsOutlierfun)
+
+names(c)
+
+names(c$cluster)
+
+names(c$cluster$Iter1)
+
+c$cluster$Iter1$Cluster1
+
+names(c$feature)
+
+names(c$feature$Iter1)
+
+names(c$feature$Iter2)
+
+c$feature$Iter2$Cluster1inIter1[1:10]
+@
+
+%------------------------------------------------------------
+\section{Compare iterClust, PAM and Consensus Clustering}
+%------------------------------------------------------------ 
+
+In this section, we compared the performance of \Rfunction{iterClust()} with another clustering framework \Rfunction{ConsensusClusterPlus()} as well as their underlying clustering algorithm \Rfunction{pam()}.
+
+<<consensusclust, results=hide>>=
+library(ConsensusClusterPlus)
+set.seed(1)
+consensusClust = ConsensusClusterPlus(exp, maxK = 10,
+                                      reps = 100, clusterAlg = "pam",
+                                      distance = "pearson", plot = FALSE)
+ICL <- calcICL(consensusClust, plot = FALSE)
+ICL <- sapply(2:10, function(k, ICL){
+  s <- ICL$clusterConsensus[grep(k, ICL$clusterConsensus[, "k"]),
+                            "clusterConsensus"]
+  mean(s[is.finite(s)])}, ICL=ICL)
+@
+
+We first projected the data on 2D-tSNE space for later visualization purpose.
+
+<<tsne, results=hide>>=
+library(tsne)
+dist <- as.dist(1 - cor(exp))
+set.seed(1)
+tsne <- tsne(dist, perplexity = 20, max_iter = 500)
+@
+
+Then we compared \Rfunction{iterClust()}, \Rfunction{pam()} and \Rfunction{ConsensusClusterPlus()}.
+
+\clearpage
+
+\begin{figure}[htbp]
+\begin{center}
+
+<<fig1, fig=TRUE, height=4, width=8>>=
+par(mfrow = c(1, 2))
+for (j in 1:length(c$cluster)){
+    COL <- structure(rep(1, ncol(exp)), names = colnames(exp))
+    for (i in 1:length(c$cluster[[j]])) COL[c$cluster[[j]][[i]]] <- i+1
+    plot(tsne[, 1], tsne[, 2], cex = 0, cex.lab = 1.5,
+         xlab = "Dim1", ylab = "Dim2",
+         main = paste("iterClust, iter=", j, sep = ""))
+    text(tsne[, 1], tsne[, 2], labels = pheno, cex = 0.5, col = COL)
+    legend("topleft", legend = "Outliers", fill = 1, bty = "n")}
+@
+
+\caption{Result of \Rfunction{iterClust()}}
+\label{Figure 1} 
+\end{center}
+\end{figure}
+
+
+\begin{figure}[htbp]
+\begin{center}
+
+<<fig2, fig=TRUE, height=4, width=8>>=
+par(mfrow = c(1, 2))
+for (j in 1:length(c$cluster)){
+    plot(tsne[, 1], tsne[, 2], cex = 0, cex.lab = 1.5,
+         xlab = "Dim1", ylab = "Dim2",
+         main = paste("PAM, k=", length(c$cluster[[j]]), sep = ""))
+    text(tsne[, 1], tsne[, 2], labels = pheno, cex = 0.5,
+         col = pam(dist, k = length(c$cluster[[j]]))$clustering)}
+@
+
+\caption{Result of \Rfunction{PAM()} with same number of clusters given by \Rfunction{iterClust()}}
+\label{Figure 2} 
+\end{center}
+\end{figure}
+
+
+\clearpage
+
+\begin{figure}[htbp]
+\begin{center}
+
+<<fig3, fig=TRUE, height=8, width=8>>=
+par(mfrow = c(2, 2))
+plot(c(2:10), ICL, xlab = "#Clusters", ylab = "Cluster Consensus Score", 
+     col = c(1, 2, rep(1, 7)), ylim = c(0.8, 1),
+     cex.lab = 1.5, pch = 16, main = "")
+plot(tsne[, 1], tsne[, 2], cex = 0, cex.lab = 1.5,
+     xlab = "Dim1", ylab = "Dim2",main = "Consensus Clustering+PAM, k=3")
+text(tsne[, 1], tsne[, 2], labels = pheno,
+     cex = 0.5, col = consensusClust[[3]]$consensusClass)
+plot(c(2:10), ICL, xlab = "#Clusters", ylab = "Cluster Consensus Score",
+     col = c(rep(1, 5), 2, 1, 1), ylim = c(0.8, 1),
+     cex.lab = 1.5, pch = 16, main = "")
+plot(tsne[, 1], tsne[, 2], cex = 0, cex.lab = 1.5,
+     xlab = "Dim1", ylab = "Dim2",main = "Consensus Clustering+PAM, k=7")
+text(tsne[, 1], tsne[, 2], labels = pheno, cex = 0.5,
+     col = consensusClust[[7]]$consensusClass)
+@
+
+\caption{Result of \Rfunction{ConsensusClusterPlus()}}
+\label{figure 3} 
+\end{center}
+\end{figure}
+
+\clearpage
+
+Th results showed that \Rfunction{iterClust()}} can distinguish subtle differences between purified and unpurified B-cells (pDLCL VS DLCL, B-CLL VS p-BLL), which cannot be distinguished by \Rfunction{pam()}} and \Rfunction{ConsensusClusterPlus()}. Also, \Rfunction{pam()}} and \Rfunction{ConsensusClusterPlus()} falsely seperated a homogenous cluster containing DLCL samples (DLCL samples are known to have subpopulations and this is one subpopulation).
+
+\end{document}

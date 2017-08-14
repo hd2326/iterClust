@@ -35,7 +35,7 @@
 \SweaveOpts{concordance=TRUE}
 
 %------------------------------------------------------------
-\title{Introduction to Iterative CLustering Analysis Using iterClust}
+\title{Introduction to Iterative Clustering Analysis Using iterClust}
 %------------------------------------------------------------
 \author{Hongxu Ding , Wanxin Wang and Andrea Califano}
 \maketitle
@@ -90,7 +90,7 @@ ith Iteration End
 \subsection{Installation}
 %------------------------------------------------------------ 
 
-Running examples in \Rpackage{iterClust} requires pre-installed \Rpackage{tsne}, \Rpackage{cluster}, \Rpackage{ConsensusClusterPlus} and \Rpackage{bcellViper}. To install \Rpackage{iterClust}, source biocLite from bioconductor
+\Rpackage{iterClust} depends on \Rpackage{SummarizedExperiment} and \Rpackage{Biobase}. Running examples in \Rpackage{iterClust} requires \Rpackage{tsne}, \Rpackage{cluster}, \Rpackage{ConsensusClusterPlus} and \Rpackage{bcellViper}. To install \Rpackage{iterClust}, source biocLite from bioconductor
 
 \begin{verbatim}
 source("http://www.bioconductor.org/biocLite.R")
@@ -101,7 +101,7 @@ biocLite("iterClust")
 \subsection{Citing}
 %------------------------------------------------------------ 
 
-% Culhane AC, Thioulouse J, Perriere G, Higgins DG.(2005) MADE4: an R package for multivariate analysis of gene expression data. \textit{Bioinformatics} \textbf{21(11):}2789-90. 
+ 
 
 
 %------------------------------------------------------------

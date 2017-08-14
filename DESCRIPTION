@@ -3,11 +3,12 @@ Type: Package
 Title: Iterative Clustering
 Version: 0.99.0
 Date: 2017-08-11
-Author: DING, HONGXU
-Maintainer: DING, HONGXU <poulainding@gmail.com>
+Author: Hongxu Ding, Wanxin Wang and Andrea Califano
+Maintainer: Hongxu Ding <poulainding@gmail.com>
 Description: A framework for performing clustering analysis iteratively.
 License: file LICENSE
 LazyData: TRUE
+Imports: SummarizedExperiment, Biobase
 Suggests: tsne, cluster, ConsensusClusterPlus, bcellViper
 BiocViews:  StatisticalMethod, Clustering
 RoxygenNote: 6.0.1

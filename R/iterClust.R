@@ -44,7 +44,7 @@
 #' 
 #' depth: (numeric) current round of iteration
 #' 
-#' @param dset (numeric matrix) features in rows and observations in columns
+#' @param dset (numeric matrix or data.frame) features in rows and observations in columns, or SummarizedExperiment0 and ExpressionSet object
 #' @param maxIter (positive integer) specifies maximum iterations to be performed
 #' @param minFeatureSize (positive integer) specifies minimum features needed
 #' @param featureSelectfun (function) takes a dataset, depth(IV) and cluster$feature(IV), returns a character array, containing features used for clustering analysis
@@ -166,80 +166,91 @@
 #' 
 #' @author DING, HONGXU (poulainding@gmail.com)
 #' 
+#' @importFrom SummarizedExperiment assay
+#' @importFrom Biobase exprs)
+#' 
 #' @export
 
 iterClust <- function(dset, maxIter=10,
                       minFeatureSize=100, featureSelectfun, 
                       minClustSize=10, clustfun, clustEvalfun, clustHeterofun,
                       obsEvalfun, obsOutlierfun){
-  depth <- 1
-  cluster <- list()
-  feature <- list()
-  clustHetero <- list()
-  #internal variables
-  
-  feat <- featureSelectfun(dset, depth, feature)#feature selection
-  clust <- clustfun(dset[feat, ], depth)#clustering
-  clustEval <- clustEvalfun(dset[feat, ], depth, clust)#evaluate each clustering scheme
-  clust <- list(clust=structure(clust[[which.max(clustEval)]], names = colnames(dset)),
-                clustEval=clustEval[[which.max(clustEval)]],
-                featureSelect=feat)#optimal clustering scheme
-  clustHetero[[depth]] <- clustHeterofun(clust$clustEval, depth)#whether the dataset is subsetable
-  if (clustHetero[[depth]] & length(feat) >= minFeatureSize){
-    message(paste("iteration:", depth, sep = ""))
-    obsEval <- obsEvalfun(dset[feat, ], clust$clust, depth)#evaluate each observation
-    c <- clust$clust[!obsOutlierfun(obsEval, depth)]#remove outliers
-    c <- lapply(names(table(c)), function(x, c) names(c)[c == x], c=c)
-    cluster[[depth]] <- c[sapply(c, function(x) length(x)) >= minClustSize]
-    names(cluster[[depth]]) <- paste("Cluster", 1:length(cluster[[depth]]), sep = "")#organize clusters
-    feature[[depth]] <- list(clust$featureSelect)
-    names(feature[[depth]]) <- "OriginalDataset"#organize features
-  #1st iteration
     
-    depth <- depth + 1
-    clust <- lapply(cluster[[depth-1]], function(x, dset, depth, feature, featureSelectfun, clustfun, clustEvalfun){
-      feat <- featureSelectfun(dset[, x], depth, feature)#feature selection
-      clust <- clustfun(dset[feat, x], depth)#clustering
-      clustEval <- clustEvalfun(dset[feat, x], depth, clust)#evaluate each clustering scheme
-      list(clust=structure(clust[[which.max(clustEval)]], names = x),
-           clustEval=clustEval[[which.max(clustEval)]],
-           featureSelect=feat)#optimal clustering scheme
-    }, dset=dset, depth=depth, feature=feature, featureSelectfun=featureSelectfun, clustfun=clustfun, clustEvalfun=clustEvalfun)
-    clustHetero[[depth]] <- clustHeterofun(sapply(clust, function(x) x$clustEval), depth)#whether the dataset is subsetable
-    while(sum(clustHetero[[depth]]) > 0 & depth <= maxIter & sum(sapply(clust, function(x, t) length(x$featureSelect) >= minFeatureSize, t=minFeatureSize)) > 0){
-      message(paste("iteration:", depth, sep = ""))
-      c <- f <- list()
-      for (i in 1:length(clust)){
-        if (!clustHetero[[depth]][i] | length(clust[[i]]$featureSelect) < minFeatureSize) {c[[i]] <- list(names(clust[[i]]$clust)); f[[i]] <- "NA, Stopped"}
-        else{
-          obsEval <- obsEvalfun(dset[clust[[i]]$featureSelect, names(clust[[i]]$clust)], clust[[i]]$clust, depth)#evaluate each observation
-          c[[i]] <- clust[[i]]$clust[!obsOutlierfun(obsEval, depth)]#remove outliers
-          c[[i]] <- lapply(names(table(clust[[i]]$clust)), function(x, c) names(c)[c == x], c=clust[[i]]$clust)
-          f[[i]] <- clust[[i]]$featureSelect}
-      }
-      c <- Reduce(c, c)
-      cluster[[depth]] <- c[sapply(c, function(x) length(x)) >= minClustSize]
-      names(cluster[[depth]]) <- paste("Cluster", 1:length(cluster[[depth]]), sep = "")#organize clusters
-      feature[[depth]] <- f
-      names(feature[[depth]]) <- paste("Cluster", 1:length(feature[[depth]]), "inIter", depth-1, sep = "")#organize features
-  #ith iteration
-      
-      depth <- depth + 1
-      clust <- lapply(cluster[[depth-1]], function(x, dset, depth, feature, featureSelectfun, clustfun, clustEvalfun){
-        feat <- featureSelectfun(dset[, x], depth, feature)#feature selection
-        clust <- clustfun(dset[feat, x], depth)#clustering
-        clustEval <- clustEvalfun(dset[feat, x], depth, clust)#evaluate each clustering scheme
-        list(clust=structure(clust[[which.max(clustEval)]], names = x),
-             clustEval=clustEval[[which.max(clustEval)]],
-             featureSelect=feat)#optimal clustering scheme
-      }, dset=dset, depth=depth, feature=feature, featureSelectfun=featureSelectfun, clustfun=clustfun, clustEvalfun=clustEvalfun)
-      clustHetero[[depth]] <- clustHeterofun(sapply(clust, function(x) x$clustEval), depth)#whether the dataset is subsetable
+    if(class(dset) == "matrix") dset <- dset
+    else if (class(dset) == "data.frame") dset <- as.matrix(dset)
+    else if(class(dset) == "SummarizedExperiment") dset <- assay(dset)
+    else if(class(dset) == "ExpressionSet") dset <- exprs(dset)
+    else message("dset should be matrix, SummarizedExperiment or ExpressionSet")
+    #class regularization
+    
+    depth <- 1
+    cluster <- list()
+    feature <- list()
+    clustHetero <- list()
+    #internal variables
+    
+    feat <- featureSelectfun(dset, depth, feature)#feature selection
+    clust <- clustfun(dset[feat, ], depth)#clustering
+    clustEval <- clustEvalfun(dset[feat, ], depth, clust)#evaluate each clustering scheme
+    clust <- list(clust=structure(clust[[which.max(clustEval)]], names = colnames(dset)),
+                  clustEval=clustEval[[which.max(clustEval)]],
+                  featureSelect=feat)#optimal clustering scheme
+    clustHetero[[depth]] <- clustHeterofun(clust$clustEval, depth)#whether the dataset is subsetable
+    if (clustHetero[[depth]] & length(feat) >= minFeatureSize){
+        message(paste("iteration:", depth, sep = ""))
+        obsEval <- obsEvalfun(dset[feat, ], clust$clust, depth)#evaluate each observation
+        c <- clust$clust[!obsOutlierfun(obsEval, depth)]#remove outliers
+        c <- lapply(names(table(c)), function(x, c) names(c)[c == x], c=c)
+        cluster[[depth]] <- c[sapply(c, function(x) length(x)) >= minClustSize]
+        names(cluster[[depth]]) <- paste("Cluster", 1:length(cluster[[depth]]), sep = "")#organize clusters
+        feature[[depth]] <- list(clust$featureSelect)
+        names(feature[[depth]]) <- "OriginalDataset"#organize features
+        #1st iteration
+        
+        depth <- depth + 1
+        clust <- lapply(cluster[[depth-1]], function(x, dset, depth, feature, featureSelectfun, clustfun, clustEvalfun){
+            feat <- featureSelectfun(dset[, x], depth, feature)#feature selection
+            clust <- clustfun(dset[feat, x], depth)#clustering
+            clustEval <- clustEvalfun(dset[feat, x], depth, clust)#evaluate each clustering scheme
+            list(clust=structure(clust[[which.max(clustEval)]], names = x),
+                 clustEval=clustEval[[which.max(clustEval)]],
+                 featureSelect=feat)#optimal clustering scheme
+        }, dset=dset, depth=depth, feature=feature, featureSelectfun=featureSelectfun, clustfun=clustfun, clustEvalfun=clustEvalfun)
+        clustHetero[[depth]] <- clustHeterofun(sapply(clust, function(x) x$clustEval), depth)#whether the dataset is subsetable
+        while(sum(clustHetero[[depth]]) > 0 & depth <= maxIter & sum(sapply(clust, function(x, t) length(x$featureSelect) >= minFeatureSize, t=minFeatureSize)) > 0){
+            message(paste("iteration:", depth, sep = ""))
+            c <- f <- list()
+            for (i in 1:length(clust)){
+                if (!clustHetero[[depth]][i] | length(clust[[i]]$featureSelect) < minFeatureSize) {c[[i]] <- list(names(clust[[i]]$clust)); f[[i]] <- "NA, Stopped"}
+                else{
+                    obsEval <- obsEvalfun(dset[clust[[i]]$featureSelect, names(clust[[i]]$clust)], clust[[i]]$clust, depth)#evaluate each observation
+                    c[[i]] <- clust[[i]]$clust[!obsOutlierfun(obsEval, depth)]#remove outliers
+                    c[[i]] <- lapply(names(table(clust[[i]]$clust)), function(x, c) names(c)[c == x], c=clust[[i]]$clust)
+                    f[[i]] <- clust[[i]]$featureSelect}
+            }
+            c <- Reduce(c, c)
+            cluster[[depth]] <- c[sapply(c, function(x) length(x)) >= minClustSize]
+            names(cluster[[depth]]) <- paste("Cluster", 1:length(cluster[[depth]]), sep = "")#organize clusters
+            feature[[depth]] <- f
+            names(feature[[depth]]) <- paste("Cluster", 1:length(feature[[depth]]), "inIter", depth-1, sep = "")#organize features
+            #ith iteration
+            
+            depth <- depth + 1
+            clust <- lapply(cluster[[depth-1]], function(x, dset, depth, feature, featureSelectfun, clustfun, clustEvalfun){
+                feat <- featureSelectfun(dset[, x], depth, feature)#feature selection
+                clust <- clustfun(dset[feat, x], depth)#clustering
+                clustEval <- clustEvalfun(dset[feat, x], depth, clust)#evaluate each clustering scheme
+                list(clust=structure(clust[[which.max(clustEval)]], names = x),
+                     clustEval=clustEval[[which.max(clustEval)]],
+                     featureSelect=feat)#optimal clustering scheme
+            }, dset=dset, depth=depth, feature=feature, featureSelectfun=featureSelectfun, clustfun=clustfun, clustEvalfun=clustEvalfun)
+            clustHetero[[depth]] <- clustHeterofun(sapply(clust, function(x) x$clustEval), depth)#whether the dataset is subsetable
+        }
+        names(cluster) <- paste("Iter", 1:length(cluster), sep = "")
+        names(feature) <- paste("Iter", 1:length(feature), sep = "")
+        return(list(cluster=cluster, feature=feature))
+    }else{
+        message("Homogenous")
+        return("Homogenous")
     }
-    names(cluster) <- paste("Iter", 1:length(cluster), sep = "")
-    names(feature) <- paste("Iter", 1:length(feature), sep = "")
-    return(list(cluster=cluster, feature=feature))
-  }else{
-    message("Homogenous")
-    return("Homogenous")
-  }
 }

@@ -9,7 +9,7 @@ iterClust(dset, maxIter = 10, minFeatureSize = 100, featureSelectfun,
   obsOutlierfun)
 }
 \arguments{
-\item{dset}{(numeric matrix) features in rows and observations in columns}
+\item{dset}{(numeric matrix or data.frame) features in rows and observations in columns, or SummarizedExperiment0 and ExpressionSet object}
 
 \item{maxIter}{(positive integer) specifies maximum iterations to be performed}
 

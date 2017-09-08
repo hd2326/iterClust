@@ -10,5 +10,5 @@ License: file LICENSE
 LazyData: TRUE
 Imports: SummarizedExperiment, Biobase
 Suggests: tsne, cluster, ConsensusClusterPlus, bcellViper
-BiocViews: StatisticalMethod, Clustering
+biocViews: StatisticalMethod, Clustering
 RoxygenNote: 6.0.1

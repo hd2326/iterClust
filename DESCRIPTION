@@ -1,7 +1,7 @@
 Package: iterClust
 Type: Package
 Title: Iterative Clustering
-Version: 0.99.1
+Version: 0.99.2
 Date: 2017-08-11
 Author: Hongxu Ding, Wanxin Wang and Andrea Califano
 Maintainer: Hongxu Ding <poulainding@gmail.com>

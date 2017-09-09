@@ -1,10 +1,10 @@
 Package: iterClust
 Type: Package
 Title: Iterative Clustering
-Version: 0.99.2
-Date: 2017-08-11
-Author: Hongxu Ding, Wanxin Wang and Andrea Califano
-Maintainer: Hongxu Ding <poulainding@gmail.com>
+Version: 0.99.3
+Date: 2017-09-8
+Author: Hongxu Ding and Andrea Califano
+Maintainer: Hongxu Ding <hd2326@columbia.edu>
 Description: A framework for performing clustering analysis iteratively.
 License: file LICENSE
 LazyData: TRUE

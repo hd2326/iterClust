@@ -2,7 +2,7 @@
 % Please edit documentation in R/obsEval.R
 \name{obsEval}
 \alias{obsEval}
-\title{Observation-wise Evaluation}
+\title{Observation-wise Clustering Robustness Evaluation}
 \usage{
 obsEval(dset, clust, iteration)
 }
@@ -18,10 +18,10 @@ a numeric vector, specifies the clustering robustness (higher value
 means more robust) of each observation under the optimal clustering scheme
 }
 \description{
-A sample observation-wise robustness evaluation framework (described in
-"Examples" section, used as default in iterClust framework). Customized
-frameworks can be defined following rules specified in "Usage", "Arguments"
-and "Value" sections.
+A sample observation-wise clustering robustness evaluation framework
+(described in "Examples" section, used as default in iterClust framework).
+Customized frameworks can be defined following rules specified in "Usage",
+"Arguments" and "Value" sections.
 }
 \examples{
 obsEval <- function(dset, clust, iteration){

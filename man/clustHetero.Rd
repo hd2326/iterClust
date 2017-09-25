@@ -12,7 +12,7 @@ clustHetero(clustEval, iteration)
 \item{iteration}{(positive integer) specifies current iteration}
 }
 \value{
-a boolean vector, specifies whether a cluster is heterogenous
+a boolean vector, specifies whether clusters are heterogenous
 }
 \description{
 A sample cluster heterogeneity evaluation framework (described in "Examples"

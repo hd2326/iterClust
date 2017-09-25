@@ -115,12 +115,6 @@
 #' @importFrom methods is
 #' @importFrom SummarizedExperiment assay
 #' @importFrom Biobase exprs
-#' @importFrom iterClust featureSelect
-#' @importFrom iterClust coreClust
-#' @importFrom iterClust clustEval
-#' @importFrom iterClust clustHetero
-#' @importFrom iterClust obsEval
-#' @importFrom iterClust obsOutlier
 #' 
 #' @export
 

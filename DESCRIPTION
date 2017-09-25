@@ -1,7 +1,7 @@
 Package: iterClust
 Type: Package
 Title: Iterative Clustering
-Version: 0.99.8
+Version: 0.99.9
 Author: Hongxu Ding and Andrea Califano
 Maintainer: Hongxu Ding <hd2326@columbia.edu>
 Description: A framework for performing clustering analysis iteratively.
@@ -9,6 +9,6 @@ License: file LICENSE
 Depends: R (>= 3.4.1)
 LazyData: TRUE
 Imports: SummarizedExperiment, Biobase, cluster, stats, methods
-Suggests: tsne, ConsensusClusterPlus, bcellViper
+Suggests: tsne, bcellViper
 biocViews: StatisticalMethod, Clustering
 RoxygenNote: 6.0.1

@@ -2,7 +2,7 @@
 % Please edit documentation in R/clustEval.R
 \name{clustEval}
 \alias{clustEval}
-\title{Cluster-wise Evaluation}
+\title{Cluster-wise Clustering Robustness Evaluation}
 \usage{
 clustEval(dset, iteration, clust)
 }
@@ -18,8 +18,8 @@ a numeric vector, specifies the clustering robustness (higher value
 means more robust) of each clustering scheme
 }
 \description{
-A sample cluster-wise robustness evaluation framework (described in
-"Examples" section, used as default in iterClust framework). Customized
+A sample cluster-wise clustering robustness evaluation framework (described
+in "Examples" section, used as default in iterClust framework). Customized
 frameworks can be defined following rules specified in "Usage", "Arguments"
 and "Value" sections.
 }

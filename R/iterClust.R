@@ -130,7 +130,6 @@ iterClust <- function(dset, maxIter=10,
     
     if(is.matrix(dset)) dset <- dset
     else if (is.data.frame(dset)) dset <- as.matrix(dset)
-    else if(methods::is(dset, "SummarizedExperiment")) dset <- assay(dset)
     else if(methods::is(dset, "ExpressionSet")) dset <- exprs(dset)
     else message("dset should be matrix, SummarizedExperiment or ExpressionSet")
     #class regularization

@@ -8,7 +8,7 @@ Description: A framework for performing clustering analysis iteratively.
 License: file LICENSE
 Depends: R (>= 3.4.1)
 LazyData: TRUE
-Imports: SummarizedExperiment, Biobase, cluster, stats, methods
+Imports: Biobase, cluster, stats, methods
 Suggests: tsne, bcellViper
 biocViews: StatisticalMethod, Clustering
 RoxygenNote: 6.0.1

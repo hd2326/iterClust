@@ -54,21 +54,21 @@ In a scenario where populations A, B1, B2 exist, pronounce differences between A
 
 ith Iteration Start =>
 
-\Rfunction{featureSelectfun} (feature selection) =>
+\Rfunction{featureSelect} (feature selection) =>
 
 \Rexpression{minFeatureSize} (confirm enough features are selected) =>
 
-\Rfunction{clustHeterofun} (confirm heterogeneity) =>
+\Rfunction{clustHetero} (confirm heterogeneity) =>
 
-\Rfunction{clustfun} (generate several clustering schemes, only for heterogenous clusters) =>
+\Rfunction{coreClust} (generate several clustering schemes, only for heterogenous clusters) =>
 
-\Rfunction{clustEvalfun} (pick the optimal clustering scheme) =>
+\Rfunction{clustEval} (pick the optimal clustering scheme) =>
 
 \Rexpression{minClustSize} (remove clusters with few observations) =>
 
-\Rfunction{obsEvalfun} (evaluate how each observations are clustered) =>
+\Rfunction{obsEval} (evaluate how each observations are clustered) =>
 
-\Rfunction{obsOutlierfun} (remove poorly clustered observations) =>
+\Rfunction{obsOutlier} (remove poorly clustered observations) =>
 
 results in Internal Variables (IV) =>
 
@@ -134,14 +134,14 @@ library(cluster)
 
 In every iterations, all genes in the dataset were used for clustering analysis.
 
-<<featureSelectfun, results=hide>>=
-featureSelectfun <- function(dset, iteration, feature) return(rownames(dset))
+<<featureSelect, results=hide>>=
+featureSelect <- function(dset, iteration, feature) return(rownames(dset))
 @
 
 In every iterations, the core function for clustering is \Rfunction{pam()} in package cluster. We searched through 2 to 5 clusters to find the optimal result.
 
-<<clustfun, results=hide>>=
-clustfun <- function(dset, iteration){
+<<coreClust, results=hide>>=
+coreClust <- function(dset, iteration){
   dist <- as.dist(1 - cor(dset))
   range=seq(2, (ncol(dset)-1), by = 1)
   clust <- vector("list", length(range))
@@ -151,8 +151,8 @@ clustfun <- function(dset, iteration){
 
 In every iterations, the core function for evaluating different clustering schemes is \Rfunction{silhouette()} in package \Rpackage{cluster}. We considered clustering schemes with the highest average silhouette score as the optimal scheme. clust is the output for function \Rfunction{clustfun()}.
 
-<<clustEvalfun, results=hide>>=
-clustEvalfun <- function(dset, iteration, clust){
+<<clustEval, results=hide>>=
+clustEval <- function(dset, iteration, clust){
   dist <- as.dist(1 - cor(dset))
   clustEval <- vector("numeric", length(clust))
   for (i in 1:length(clust)){
@@ -162,15 +162,15 @@ clustEvalfun <- function(dset, iteration, clust){
 
 In every iterations, clusters with average silhouette score greater than 0.15 were considered as heterogenous and further splitted.
 
-<<clustHeterofun, results=hide>>=
-clustHeterofun <- function(clustEval, iteration){
+<<clustHetero, results=hide>>=
+clustHetero <- function(clustEval, iteration){
     return(clustEval > 0*iteration+0.15)}
 @
 
 In every iterations, the core function for evaluating each observation is \Rfunction{silhouette()} in package cluster. clust is the output for function \Rfunction{clustfun()}.
 
-<<obsEvalfun, results=hide>>=
-obsEvalfun <- function(dset, clust, iteration){
+<<obsEval, results=hide>>=
+obsEval <- function(dset, clust, iteration){
   dist <- as.dist(1 - cor(dset))
   obsEval <- vector("numeric", length(clust))
   return(silhouette(clust, dist)[, "sil_width"])}
@@ -178,8 +178,8 @@ obsEvalfun <- function(dset, clust, iteration){
 
 In every iterations, observations with silhouette score smaller than -1 were considered as outlier observations.
 
-<<obsOutlierfun, results=hide>>=
-obsOutlierfun <- function(obsEval, iteration) return(obsEval < 0*iteration-1)
+<<obsOutlier, results=hide>>=
+obsOutlier <- function(obsEval, iteration) return(obsEval < 0*iteration-1)
 @
 
 %------------------------------------------------------------
@@ -189,11 +189,7 @@ obsOutlierfun <- function(obsEval, iteration) return(obsEval < 0*iteration-1)
 \Rfunction{iterClust()} was run with the above defined functions. Then we showed how the results of \Rfunction{iterClust()} are organized.
 
 <<iterclust>>=
-c <- iterClust(exp, maxIter=3,
-               minFeatureSize=100, featureSelectfun=featureSelectfun,
-               minClustSize=5, clustfun=clustfun,
-               clustEvalfun=clustEvalfun, clustHeterofun=clustHeterofun,
-               obsEvalfun=obsEvalfun, obsOutlierfun=obsOutlierfun)
+c <- iterClust(exp, maxIter=3, minFeatureSize=100, minClustSize=5)
 
 names(c)
 

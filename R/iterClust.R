@@ -112,6 +112,7 @@
 #' 
 #' @author DING, HONGXU (hd2326@columbia.edu)
 #' 
+#' @importFrom methods is
 #' @importFrom SummarizedExperiment assay
 #' @importFrom Biobase exprs
 #' @importFrom iterClust featureSelect

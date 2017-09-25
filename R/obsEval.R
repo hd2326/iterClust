@@ -21,6 +21,10 @@
 #' 
 #' @author DING, HONGXU (hd2326@columbia.edu)
 #' 
+#' @importFrom stats as.dist
+#' @importFrom stats cor
+#' @importFrom cluster silhouette
+#' 
 #' @export
 
 obsEval <- function(dset, clust, iteration){

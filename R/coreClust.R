@@ -22,6 +22,10 @@
 #' 
 #' @author DING, HONGXU (hd2326@columbia.edu)
 #' 
+#' @importFrom stats as.dist
+#' @importFrom stats cor
+#' @importFrom cluster pam
+#' 
 #' @export
 
 coreClust <- function(dset, iteration){

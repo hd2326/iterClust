@@ -23,6 +23,10 @@
 #' 
 #' @author DING, HONGXU (hd2326@columbia.edu)
 #' 
+#' @importFrom stats as.dist
+#' @importFrom stats cor
+#' @importFrom cluster silhouette
+#' 
 #' @export
 
 clustEval <- function(dset, iteration, clust){

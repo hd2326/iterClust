@@ -1,7 +1,7 @@
 Package: iterClust
 Type: Package
 Title: Iterative Clustering
-Version: 0.99.11
+Version: 0.99.12
 Author: Hongxu Ding and Andrea Califano
 Maintainer: Hongxu Ding <hd2326@columbia.edu>
 Description: A framework for performing clustering analysis iteratively.
@@ -11,4 +11,6 @@ LazyData: TRUE
 Imports: Biobase, cluster, stats, methods
 Suggests: tsne, bcellViper
 biocViews: StatisticalMethod, Clustering
+URL: https://github.com/hd2326/iterClust
+BugReports: https://github.com/hd2326/iterClust/issues
 RoxygenNote: 6.0.1

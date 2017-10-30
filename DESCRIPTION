@@ -1,7 +1,7 @@
 Package: iterClust
 Type: Package
 Title: Iterative Clustering
-Version: 1.0.0
+Version: 1.1.0
 Author: Hongxu Ding and Andrea Califano
 Maintainer: Hongxu Ding <hd2326@columbia.edu>
 Description: A framework for performing clustering analysis iteratively.

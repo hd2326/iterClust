@@ -131,19 +131,25 @@ iterClust <- function(dset, maxIter=10,
     if(is.matrix(dset)) dset <- dset
     else if (is.data.frame(dset)) dset <- as.matrix(dset)
     else if(methods::is(dset, "ExpressionSet")) dset <- exprs(dset)
-    else message("dset should be matrix, SummarizedExperiment or ExpressionSet")
+    else message("dset should be matrix, data.frame or ExpressionSet")
     #class regularization
     
     depth <- 1
     cluster <- list()
     feature <- list()
+    clusterScore <- list()
+    observationScore <- list()
     CH <- list()
     #internal variables
     
+    message("Initialize iteration 1")
+    message("Feature selection...")
     feat <- featureSelect(dset, depth, feature)
     #feature selection
+    message("Generating clustering schemes...")
     clust <- coreClust(dset[feat, ], depth)
     #clustering
+    message("Evaluating each clustering scheme...")
     CE <- clustEval(dset[feat, ], depth, clust)
     #evaluate each clustering scheme
     clust <- list(clust=structure(clust[[which.max(CE)]],
@@ -154,7 +160,8 @@ iterClust <- function(dset, maxIter=10,
     CH[[depth]] <- clustHetero(clust$clustEval, depth)
     #whether the dataset is subsetable
     if (CH[[depth]] & length(feat) >= minFeatureSize){
-        message(paste("iteration:", depth, sep = ""))
+        message("Heterogenous cluster detected, iterClust proceeding...")
+        message("Removing outlier samples...")
         OE <- obsEval(dset[feat, ], clust$clust, depth)
         #evaluate each observation
         cc <- clust$clust[!obsOutlier(OE, depth)]
@@ -170,21 +177,35 @@ iterClust <- function(dset, maxIter=10,
         feature[[depth]] <- list(clust$featureSelect)
         names(feature[[depth]]) <- "OriginalDataset"
         #organize features
+        clusterScore[[depth]] <- list(CE)
+        names(clusterScore[[depth]]) <- "OriginalDataset"
+        observationScore[[depth]] <- list(structure(OE, names=colnames(dset)))
+        names(observationScore[[depth]]) <- "OriginalDataset"
+        #organize statistics
+        message(paste("Iteration 1 done, giving", length(cluster[[depth]]),
+                      "clusters in total\n\n"))
         #1st iteration
         
         depth <- depth + 1
+        message(paste("Initialize iteration ", depth,
+                      ", for each cluster given by the previous iteration:",
+                      sep = ""))
         clust <- lapply(cluster[[depth-1]], function(x, dset, depth, feature,
                                                      featureSelect, coreClust,
                                                      clustEval){
+            message("Feature selection...")
             feat <- featureSelect(dset[, x], depth, feature)
             #feature selection
+            message("Generating clustering schemes...")
             clust <- coreClust(dset[feat, x], depth)
             #clustering
+            message("Evaluating each clustering scheme...\n")
             CE <- clustEval(dset[feat, x], depth, clust)
             #evaluate each clustering scheme
             list(clust=structure(clust[[which.max(CE)]], names = x),
                  clustEval=CE[[which.max(CE)]],
-                 featureSelect=feat)
+                 featureSelect=feat,
+                 clustScore=CE)
             #optimal clustering scheme
         }, dset=dset, depth=depth, feature=feature,
         featureSelect=featureSelect, coreClust=coreClust,
@@ -197,20 +218,24 @@ iterClust <- function(dset, maxIter=10,
               sum(unlist(lapply(clust, function(x, t){
                   length(x$featureSelect) >= minFeatureSize
               }, t=minFeatureSize))) > 0){
-            message(paste("iteration:", depth, sep = ""))
+            message("Heterogenous cluster detected, iterClust proceeding...")
+            message("Removing outlier samples...")
             cc <- f <- list()
+            OE <- list()
             for (i in seq_len(length(clust))){
                 if (!CH[[depth]][i] | 
                     length(clust[[i]]$featureSelect) < minFeatureSize){
                     cc[[i]] <- list(names(clust[[i]]$clust))
-                    f[[i]] <- "NA, Stopped"}
+                    f[[i]] <- "NA, Stopped"
+                    OE[[i]] <- "NA, stopped"}
                 else{
-                    OE <- obsEval(
+                    OE[[i]] <- obsEval(
                         dset[clust[[i]]$featureSelect, names(clust[[i]]$clust)],
                         clust[[i]]$clust,
                         depth)
+                    names(OE[[i]]) <- names(clust[[i]]$clust)
                     #evaluate each observation
-                    cc[[i]] <- clust[[i]]$clust[!obsOutlier(OE, depth)]
+                    cc[[i]] <- clust[[i]]$clust[!obsOutlier(OE[[i]], depth)]
                     #remove outliers
                     cc[[i]] <- lapply(names(table(clust[[i]]$clust)),
                                       function(x, cc) names(cc)[cc == x],
@@ -230,17 +255,30 @@ iterClust <- function(dset, maxIter=10,
                                              "inIter",
                                              depth-1,
                                              sep = "")
+            message(paste("Iteration", depth, "done, giving",
+                          length(cluster[[depth]]), "clusters in total\n\n"))
             #organize features
+            clusterScore[[depth]] <- lapply(clust, function(x) x$clustScore)
+            names(clusterScore[[depth]]) <- names(feature[[depth]])
+            observationScore[[depth]] <- OE
+            names(observationScore[[depth]]) <- names(feature[[depth]])
+            #organize statistics
             #ith iteration
             
             depth <- depth + 1
+            message(paste("Initialize iteration ", depth,
+                          ", for each cluster given by the previous iteration:",
+                          sep = ""))
             clust <- lapply(cluster[[depth-1]], function(x, dset, depth,
                                                          feature, featureSelect,
                                                          coreClust, clustEval){
+                message("Feature selection...")
                 feat <- featureSelect(dset[, x], depth, feature)
                 #feature selection
+                message("Generating clustering schemes...")
                 clust <- coreClust(dset[feat, x], depth)
                 #clustering
+                message("Evaluating each clustering scheme...\n")
                 CE <- clustEval(dset[feat, x], depth, clust)
                 #evaluate each clustering scheme
                 list(clust=structure(clust[[which.max(CE)]], names = x),
@@ -257,7 +295,17 @@ iterClust <- function(dset, maxIter=10,
         }
         names(cluster) <- paste("Iter", seq_len(length(cluster)), sep = "")
         names(feature) <- paste("Iter", seq_len(length(feature)), sep = "")
-        return(list(cluster=cluster, feature=feature))
+        names(clusterScore) <- paste("Iter",
+                                     seq_len(length(clusterScore)),
+                                     sep = "")
+        names(observationScore) <- paste("Iter",
+                                         seq_len(length(observationScore)),
+                                         sep = "")
+        message(paste("iterClust finished, giving",
+                      length(cluster[[length(cluster)]]),
+                      "clusters in total"))
+        return(list(cluster=cluster, feature=feature, 
+                    clustEval=clusterScore, obsEval=observationScore))
     }else{
         message("Homogenous")
         return("Homogenous")

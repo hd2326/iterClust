@@ -15,7 +15,7 @@
 #' @examples
 #' coreClust <- function(dset, iteration){
 #'     dist <- as.dist(1 - cor(dset))
-#'     range=seq(2, (ncol(dset)-1), by = 1)
+#'     range=seq(2, ncol(dset)-1, by = 1)
 #'     clust <- vector("list", length(range))
 #'     for (i in 1:length(range)) clust[[i]] <- pam(dist, range[i])$clustering
 #'     return(clust)}
@@ -30,7 +30,7 @@
 
 coreClust <- function(dset, iteration){
     dist <- as.dist(1 - cor(dset))
-    range=seq(2, (ncol(dset)-1), by = 1)
+    range=seq(2, ncol(dset)-1, by = 1)
     clust <- vector("list", length(range))
     for (i in 1:length(range)) clust[[i]] <- pam(dist, range[i])$clustering
     return(clust)}

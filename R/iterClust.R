@@ -80,6 +80,12 @@
 #' (character array) features used to split each cluster in the previous
 #' iteration thereby produce the current clusters
 #' 
+#' --> $clusterScore (list) $Iter[i] (list) $Cluster[j]inIter[i-1],
+#' (numeric array) clustEval output for each clustering schemes
+#' 
+#' --> $observationScore (list) $Iter[i] (list) $Cluster[j]inIter[i-1],
+#' (numeric array) obsEval output for each samples
+#' 
 #' 
 #' @keywords iterClust
 #' @examples 

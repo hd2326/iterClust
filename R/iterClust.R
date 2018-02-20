@@ -233,8 +233,7 @@ iterClust <- function(dset, maxIter=10,
                     length(clust[[i]]$featureSelect) < minFeatureSize){
                     cc[[i]] <- list(names(clust[[i]]$clust))
                     f[[i]] <- "NA, Stopped"
-                    OE[[i]] <- "NA, Stopped"
-                    clust[[i]]$clusterScore <- "NA, Stopped"}
+                    OE[[i]] <- "NA, Stopped"}
                 else{
                     OE[[i]] <- obsEval(
                         dset[clust[[i]]$featureSelect, names(clust[[i]]$clust)],
@@ -290,7 +289,8 @@ iterClust <- function(dset, maxIter=10,
                 #evaluate each clustering scheme
                 list(clust=structure(clust[[which.max(CE)]], names = x),
                      clustEval=CE[[which.max(CE)]],
-                     featureSelect=feat)
+                     featureSelect=feat,
+                     clustScore=CE)
                 #optimal clustering scheme
             }, dset=dset, depth=depth,
             feature=feature, featureSelect=featureSelect,

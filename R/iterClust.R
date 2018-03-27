@@ -118,6 +118,10 @@
 #' 
 #' @author DING, HONGXU (hd2326@columbia.edu)
 #' 
+#' @references Hongxu Ding, Wanxin Wang, Andrea Califano; 
+#' iterClust: a statistical framework for iterative clustering analysis, 
+#' Bioinformatics, bty176, https://doi.org/10.1093/bioinformatics/bty176
+#' 
 #' @importFrom methods is
 #' @importFrom SummarizedExperiment assay
 #' @importFrom Biobase exprs
